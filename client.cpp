@@ -7,13 +7,17 @@
 #include <capnp/rpc-twoparty.h>
 #include <iostream>
 
-int main()
+int main(int argc, const char* argv[])
 {
   auto io = kj::setupAsyncIo();
 
   auto &waitScope = io.waitScope;
   kj::Network &network = io.provider->getNetwork();
-  kj::Own<kj::NetworkAddress> addr = network.parseAddress("localhost:12345").wait(waitScope);
+  kj::Own<kj::NetworkAddress> addr =
+  (argc != 2) ?
+    network.parseAddress("localhost:12345").wait(io.waitScope) :
+    network.parseAddress(argv[1]).wait(io.waitScope);
+
   kj::Own<kj::AsyncIoStream> conn = addr->connect().wait(waitScope);
 
   capnp::TwoPartyClient client(*conn);

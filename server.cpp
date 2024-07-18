@@ -1,8 +1,8 @@
 /*
  *clang++ % echo.capnp.c++ -o simpleserver00 -I/usr/local/include -L/usr/local/lib -std=c++20 -lcapnp-rpc -lkj -lcapnp
  */
-#include <capnp/ez-rpc.h>
 #include <capnp/rpc-twoparty.h>
+#include <kj/async-io.h>
 #include <iostream>
 
 #include "echo.capnp.h"
@@ -19,11 +19,14 @@ public:
   }
 };
 
-int main()
+int main(int argc,const char* argv[])
 {
   auto io = kj::setupAsyncIo();
   kj::Network &network = io.provider->getNetwork();
-  kj::Own<kj::NetworkAddress> addr = network.parseAddress("localhost:12345").wait(io.waitScope);
+  kj::Own<kj::NetworkAddress> addr = (argc != 2) ?
+    network.parseAddress("localhost:12345").wait(io.waitScope) :
+    network.parseAddress(argv[1]).wait(io.waitScope);
+
   kj::Own<kj::ConnectionReceiver> listener = addr->listen();
 
   capnp::TwoPartyServer server(kj::heap<EchoImpl>());
